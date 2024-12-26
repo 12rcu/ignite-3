@@ -519,24 +519,10 @@ public class DistributionZonesTestUtil {
         Set<String> expectedValueNames =
                 expectedValue == null ? null : expectedValue.stream().map(ClusterNode::name).collect(toSet());
 
-        boolean success = waitForCondition(() -> {
-            Set<String> dataNodes = null;
-            try {
-                dataNodes = distributionZoneManager.dataNodes(causalityToken.get(), catalogVersion.get(), zoneId).get(5, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                // Ignore
-            }
+        Set<String> dataNodes = distributionZoneManager.dataNodes(causalityToken.get(), catalogVersion.get(), zoneId)
+                .get(timeoutMillis, TimeUnit.MILLISECONDS);
 
-            return Objects.equals(dataNodes, expectedValueNames);
-        }, timeoutMillis);
-
-        // We do a second check simply to print a nice error message in case the condition above is not achieved.
-        if (!success) {
-            Set<String> dataNodes = distributionZoneManager.dataNodes(causalityToken.get(), catalogVersion.get(), zoneId)
-                    .get(5, TimeUnit.SECONDS);
-
-            assertThat(dataNodes, is(expectedValueNames));
-        }
+        assertThat(dataNodes, is(expectedValueNames));
     }
 
     /**

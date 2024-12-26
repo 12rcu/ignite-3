@@ -124,7 +124,7 @@ public abstract class BaseIgniteRestartTest extends IgniteAbstractTest {
     /** Cluster nodes. */
     protected List<PartialNode> partialNodes;
 
-    protected static final long TIMEOUT_MILLIS = 10_000L;
+    protected static final long TIMEOUT_MILLIS = 5_000L;
 
     @BeforeEach
     void setUp(TestInfo testInfo) {

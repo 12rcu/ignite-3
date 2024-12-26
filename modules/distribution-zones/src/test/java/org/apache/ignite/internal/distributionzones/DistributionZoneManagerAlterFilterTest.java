@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.distributionzones;
 
 import static java.util.UUID.randomUUID;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.ignite.internal.catalog.CatalogService.DEFAULT_STORAGE_PROFILE;
 import static org.apache.ignite.internal.catalog.commands.CatalogUtils.IMMEDIATE_TIMER_VALUE;
 import static org.apache.ignite.internal.catalog.commands.CatalogUtils.INFINITE_TIMER_VALUE;
@@ -38,6 +39,7 @@ import org.apache.ignite.internal.cluster.management.topology.api.LogicalNode;
 import org.apache.ignite.internal.metastorage.server.If;
 import org.apache.ignite.internal.network.ClusterNodeImpl;
 import org.apache.ignite.network.NetworkAddress;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -83,6 +85,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
      */
     @ParameterizedTest(name = "defaultZone={0}")
     @ValueSource(booleans = {true, false})
+    @Timeout(value = ZONE_MODIFICATION_AWAIT_TIMEOUT, unit = MILLISECONDS)
     void testAlterFilter(boolean defaultZone) throws Exception {
         String zoneName = preparePrerequisites(defaultZone);
 
@@ -97,7 +100,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
         alterZone(zoneName, null, null, newFilter);
 
         assertDataNodesFromManager(distributionZoneManager, metaStorageManager::appliedRevision, catalogManager::latestCatalogVersion,
-                getZoneId(zoneName), Set.of(C, D), ZONE_MODIFICATION_AWAIT_TIMEOUT);
+                getZoneId(zoneName), Set.of(C, D), ZONE_MODIFICATION_AWAIT_TIMEOUT * 2);
     }
 
     /**
@@ -107,6 +110,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
      */
     @ParameterizedTest(name = "defaultZone={0}")
     @ValueSource(booleans = {true, false})
+    @Timeout(value = ZONE_MODIFICATION_AWAIT_TIMEOUT, unit = MILLISECONDS)
     void testAlterFilterToEmtpyNodes(boolean defaultZone) throws Exception {
         String zoneName = preparePrerequisites(defaultZone);
 
@@ -121,7 +125,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
         alterZone(zoneName, null, null, newFilter);
 
         assertDataNodesFromManager(distributionZoneManager, metaStorageManager::appliedRevision, catalogManager::latestCatalogVersion,
-                getZoneId(zoneName), Set.of(), ZONE_MODIFICATION_AWAIT_TIMEOUT);
+                getZoneId(zoneName), Set.of(), ZONE_MODIFICATION_AWAIT_TIMEOUT * 2);
     }
 
     /**
@@ -131,6 +135,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
      */
     @ParameterizedTest(name = "defaultZone={0}")
     @ValueSource(booleans = {true, false})
+    @Timeout(value = ZONE_MODIFICATION_AWAIT_TIMEOUT * 3, unit = MILLISECONDS)
     void testAlterFilterDoNotAffectScaleDown(boolean defaultZone) throws Exception {
         String zoneName = preparePrerequisites(IMMEDIATE_TIMER_VALUE, COMMON_UP_DOWN_AUTOADJUST_TIMER_SECONDS, defaultZone);
 
@@ -148,7 +153,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
         assertTrue(
                 waitForCondition(
                         () -> distributionZoneManager.zonesState().get(zoneId).scaleDownTask() != null,
-                        ZONE_MODIFICATION_AWAIT_TIMEOUT
+                        ZONE_MODIFICATION_AWAIT_TIMEOUT * 4
                 )
         );
 
@@ -159,7 +164,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
 
         // Node C is still in data nodes because altering a filter triggers only immediate scale up.
         assertDataNodesFromManager(distributionZoneManager, metaStorageManager::appliedRevision, catalogManager::latestCatalogVersion,
-                zoneId, Set.of(C, D), ZONE_MODIFICATION_AWAIT_TIMEOUT);
+                zoneId, Set.of(C, D), ZONE_MODIFICATION_AWAIT_TIMEOUT * 4);
 
         // Check that scale down task is still scheduled.
         assertNotNull(distributionZoneManager.zonesState().get(zoneId).scaleUpTask());
@@ -168,7 +173,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
         alterZone(zoneName, INFINITE_TIMER_VALUE, IMMEDIATE_TIMER_VALUE, newFilter);
 
         assertDataNodesFromManager(distributionZoneManager, metaStorageManager::appliedRevision, catalogManager::latestCatalogVersion,
-                zoneId, Set.of(D), ZONE_MODIFICATION_AWAIT_TIMEOUT);
+                zoneId, Set.of(D), ZONE_MODIFICATION_AWAIT_TIMEOUT * 4);
     }
 
     /**
@@ -179,6 +184,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
      */
     @ParameterizedTest(name = "defaultZone={0}")
     @ValueSource(booleans = {true, false})
+    @Timeout(value = ZONE_MODIFICATION_AWAIT_TIMEOUT * 2, unit = MILLISECONDS)
     void testNodeAddedWhileAlteringFilter(boolean defaultZone) throws Exception {
         String zoneName = preparePrerequisites(COMMON_UP_DOWN_AUTOADJUST_TIMER_SECONDS, INFINITE_TIMER_VALUE, defaultZone);
 
@@ -226,7 +232,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
 
         // Check that node E, that was added while filter's altering, is not propagated to data nodes.
         assertDataNodesFromManager(distributionZoneManager, metaStorageManager::appliedRevision, catalogManager::latestCatalogVersion,
-                zoneId, Set.of(C, D), ZONE_MODIFICATION_AWAIT_TIMEOUT);
+                zoneId, Set.of(C, D), ZONE_MODIFICATION_AWAIT_TIMEOUT * 3);
 
         // Assert that scheduled timer was not canceled because of immediate scale up after filter altering.
         assertNotNull(distributionZoneManager.zonesState().get(zoneId).scaleUpTask());
@@ -235,7 +241,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
 
         // Check that node E, that was added after filter's altering, was added only after altering immediate scale up.
         assertDataNodesFromManager(distributionZoneManager, metaStorageManager::appliedRevision, catalogManager::latestCatalogVersion,
-                zoneId, Set.of(C, D, e), ZONE_MODIFICATION_AWAIT_TIMEOUT);
+                zoneId, Set.of(C, D, e), ZONE_MODIFICATION_AWAIT_TIMEOUT * 3);
     }
 
     /**
@@ -272,7 +278,7 @@ public class DistributionZoneManagerAlterFilterTest extends BaseDistributionZone
         }
 
         assertDataNodesFromManager(distributionZoneManager, metaStorageManager::appliedRevision, catalogManager::latestCatalogVersion,
-                getZoneId(zoneName), Set.of(A, C), ZONE_MODIFICATION_AWAIT_TIMEOUT);
+                getZoneId(zoneName), Set.of(A, C), ZONE_MODIFICATION_AWAIT_TIMEOUT * 10);
 
         return zoneName;
     }

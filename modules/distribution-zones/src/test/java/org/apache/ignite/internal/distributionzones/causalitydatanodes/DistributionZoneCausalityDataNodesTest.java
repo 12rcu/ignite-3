@@ -96,6 +96,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.mockito.stubbing.Answer;
 
 /**
@@ -455,6 +456,7 @@ public class DistributionZoneCausalityDataNodesTest extends BaseDistributionZone
      * @throws Exception If failed.
      */
     @Test
+    @Timeout(value = TIMEOUT, unit = MILLISECONDS)
     void testZoneWithNonImmediateTimersOnCreation() throws Exception {
         createZone(ZONE_NAME, 1, 1, null);
 
@@ -470,7 +472,7 @@ public class DistributionZoneCausalityDataNodesTest extends BaseDistributionZone
                 catalogManager::latestCatalogVersion,
                 zoneId,
                 ONE_NODE,
-                TIMEOUT
+                TIMEOUT * 2
         );
     }
 
@@ -481,6 +483,7 @@ public class DistributionZoneCausalityDataNodesTest extends BaseDistributionZone
      * @throws Exception If failed.
      */
     @Test
+    @Timeout(value = TIMEOUT * 2, unit = MILLISECONDS)
     void testZoneWithNonImmediateScaleDownTimerOnCreation() throws Exception {
         createZone(ZONE_NAME, IMMEDIATE_TIMER_VALUE, 1, null);
 
@@ -491,7 +494,7 @@ public class DistributionZoneCausalityDataNodesTest extends BaseDistributionZone
         int zoneId = getZoneId(ZONE_NAME);
 
         Set<String> dataNodes1 = distributionZoneManager.dataNodes(topologyRevision, catalogManager.latestCatalogVersion(), zoneId)
-                .get(TIMEOUT, MILLISECONDS);
+                .get(TIMEOUT * 3, MILLISECONDS);
         assertEquals(TWO_NODES_NAMES, dataNodes1);
 
         assertDataNodesFromManager(
@@ -500,7 +503,7 @@ public class DistributionZoneCausalityDataNodesTest extends BaseDistributionZone
                 catalogManager::latestCatalogVersion,
                 zoneId,
                 ONE_NODE,
-                TIMEOUT
+                TIMEOUT * 3
         );
     }
 
@@ -511,6 +514,7 @@ public class DistributionZoneCausalityDataNodesTest extends BaseDistributionZone
      * @throws Exception If failed.
      */
     @Test
+    @Timeout(value = TIMEOUT * 2, unit = MILLISECONDS)
     void testZoneWithNonImmediateScaleUpTimerOnCreation() throws Exception {
         createZone(ZONE_NAME, 1, IMMEDIATE_TIMER_VALUE, null);
 
@@ -521,7 +525,7 @@ public class DistributionZoneCausalityDataNodesTest extends BaseDistributionZone
         int zoneId = getZoneId(ZONE_NAME);
 
         Set<String> dataNodes1 = distributionZoneManager.dataNodes(topologyRevision, catalogManager.latestCatalogVersion(), zoneId)
-                .get(TIMEOUT, MILLISECONDS);
+                .get(TIMEOUT * 3, MILLISECONDS);
         assertEquals(Set.of(), dataNodes1);
 
         assertDataNodesFromManager(
@@ -530,7 +534,7 @@ public class DistributionZoneCausalityDataNodesTest extends BaseDistributionZone
                 catalogManager::latestCatalogVersion,
                 zoneId,
                 ONE_NODE,
-                TIMEOUT
+                TIMEOUT * 3
         );
     }
 
@@ -1033,6 +1037,7 @@ public class DistributionZoneCausalityDataNodesTest extends BaseDistributionZone
      * Tests that Distribution Zone Manager stores logical topology update history.
      */
     @Test
+    @Timeout(value = TIMEOUT * 4, unit = MILLISECONDS)
     void testLogicalTopologyUpdateHistoryIsStored() throws Exception {
         createZone(ZONE_NAME, 1, 1, null);
 
@@ -1040,15 +1045,15 @@ public class DistributionZoneCausalityDataNodesTest extends BaseDistributionZone
 
         newTopology.add(NODE_0);
         long topologyRevisionOneAdded = putNodeInLogicalTopologyAndGetRevision(NODE_0, newTopology);
-        waitForCondition(() -> metaStorageManager.appliedRevision() >= topologyRevisionOneAdded, TIMEOUT);
+        waitForCondition(() -> metaStorageManager.appliedRevision() >= topologyRevisionOneAdded, TIMEOUT * 5);
 
         newTopology.add(NODE_1);
         long topologyRevisionTwoAdded = putNodeInLogicalTopologyAndGetRevision(NODE_1, newTopology);
-        waitForCondition(() -> metaStorageManager.appliedRevision() >= topologyRevisionTwoAdded, TIMEOUT);
+        waitForCondition(() -> metaStorageManager.appliedRevision() >= topologyRevisionTwoAdded, TIMEOUT * 5);
 
         newTopology.remove(NODE_1);
         long topologyRevisionOneRemoved = removeNodeInLogicalTopologyAndGetRevision(Set.of(NODE_1), newTopology);
-        waitForCondition(() -> metaStorageManager.appliedRevision() >= topologyRevisionOneRemoved, TIMEOUT);
+        waitForCondition(() -> metaStorageManager.appliedRevision() >= topologyRevisionOneRemoved, TIMEOUT * 5);
 
         int zoneId = getZoneId(ZONE_NAME);
 
@@ -1058,7 +1063,7 @@ public class DistributionZoneCausalityDataNodesTest extends BaseDistributionZone
                 catalogManager::latestCatalogVersion,
                 zoneId,
                 ONE_NODE,
-                TIMEOUT
+                TIMEOUT * 5
         );
 
         assertEquals(ONE_NODE_NAME, nodeNames(distributionZoneManager.logicalTopology(topologyRevisionOneAdded)));

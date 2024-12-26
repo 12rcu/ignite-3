@@ -18,6 +18,7 @@
 package org.apache.ignite.internal.distributionzones;
 
 import static java.util.UUID.randomUUID;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.apache.ignite.internal.catalog.commands.CatalogUtils.IMMEDIATE_TIMER_VALUE;
 import static org.apache.ignite.internal.distributionzones.DistributionZonesTestUtil.assertDataNodesFromManager;
 
@@ -28,6 +29,7 @@ import org.apache.ignite.internal.cluster.management.topology.api.LogicalNode;
 import org.apache.ignite.internal.network.ClusterNodeImpl;
 import org.apache.ignite.network.NetworkAddress;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 /**
  * Tests distribution zone manager interactions with storage profiles filtering.
@@ -62,26 +64,29 @@ public class DistributionZoneManagerStorageProfilesFilterTest extends BaseDistri
     );
 
     @Test
+    @Timeout(value = ZONE_MODIFICATION_AWAIT_TIMEOUT * 2, unit = MILLISECONDS)
     void testFilterOnScaleUp() throws Exception {
         preparePrerequisites();
 
         topology.putNode(D);
 
         assertDataNodesFromManager(distributionZoneManager, metaStorageManager::appliedRevision, catalogManager::latestCatalogVersion,
-                getZoneId(ZONE_NAME), Set.of(A, B, D), ZONE_MODIFICATION_AWAIT_TIMEOUT);
+                getZoneId(ZONE_NAME), Set.of(A, B, D), ZONE_MODIFICATION_AWAIT_TIMEOUT * 3);
     }
 
     @Test
+    @Timeout(value = ZONE_MODIFICATION_AWAIT_TIMEOUT * 2, unit = MILLISECONDS)
     void testFilterOnScaleDown() throws Exception {
         preparePrerequisites();
 
         topology.removeNodes(Set.of(A));
 
         assertDataNodesFromManager(distributionZoneManager, metaStorageManager::appliedRevision, catalogManager::latestCatalogVersion,
-                getZoneId(ZONE_NAME), Set.of(B), ZONE_MODIFICATION_AWAIT_TIMEOUT);
+                getZoneId(ZONE_NAME), Set.of(B), ZONE_MODIFICATION_AWAIT_TIMEOUT * 3);
     }
 
     @Test
+    @Timeout(value = ZONE_MODIFICATION_AWAIT_TIMEOUT * 2, unit = MILLISECONDS)
     void testFilterOnScaleUpWithNewAttributesAfterRestart() throws Exception {
         preparePrerequisites();
 
@@ -97,7 +102,7 @@ public class DistributionZoneManagerStorageProfilesFilterTest extends BaseDistri
         topology.putNode(newC);
 
         assertDataNodesFromManager(distributionZoneManager, metaStorageManager::appliedRevision, catalogManager::latestCatalogVersion,
-                getZoneId(ZONE_NAME), Set.of(A, B, newC), ZONE_MODIFICATION_AWAIT_TIMEOUT);
+                getZoneId(ZONE_NAME), Set.of(A, B, newC), ZONE_MODIFICATION_AWAIT_TIMEOUT * 3);
     }
 
     /**
@@ -116,6 +121,6 @@ public class DistributionZoneManagerStorageProfilesFilterTest extends BaseDistri
         createZone(ZONE_NAME, IMMEDIATE_TIMER_VALUE, IMMEDIATE_TIMER_VALUE, null, "clock_rocks,segmented_aipersist");
 
         assertDataNodesFromManager(distributionZoneManager, metaStorageManager::appliedRevision, catalogManager::latestCatalogVersion,
-                getZoneId(ZONE_NAME), Set.of(A, B), ZONE_MODIFICATION_AWAIT_TIMEOUT);
+                getZoneId(ZONE_NAME), Set.of(A, B), ZONE_MODIFICATION_AWAIT_TIMEOUT * 10);
     }
 }
