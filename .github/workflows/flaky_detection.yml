@@ -50,3 +50,33 @@ jobs:
         
       - name: Test 10
         run: ./gradlew :ignite-raft:test
+
+      - name: Test 11
+        run: ./gradlew :ignite-raft:test
+
+      - name: Test 12
+        run: ./gradlew :ignite-raft:test
+
+      - name: Test 13
+        run: ./gradlew :ignite-raft:test
+
+      - name: Test 14
+        run: ./gradlew :ignite-raft:test
+
+      - name: Test 15
+        run: ./gradlew :ignite-raft:test
+
+      - name: Test 16
+        run: ./gradlew :ignite-raft:test
+
+      - name: Test 17
+        run: ./gradlew :ignite-raft:test
+
+      - name: Test 18
+        run: ./gradlew :ignite-raft:test
+
+      - name: Test 19
+        run: ./gradlew :ignite-raft:test
+
+      - name: Test 20
+        run: ./gradlew :ignite-raft:test
